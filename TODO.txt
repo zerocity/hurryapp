@@ -1,0 +1,56 @@
+var http = require('http');
+
+var latitude = 48.2093134;
+var longitude = 16.35584;
+
+var body = '<?xml version="1.0" encoding="UTF-8"?>' +
+              '<ft>' +
+                '<request clientId="123" apiName="api_search_location_stops_nearby" apiVersion="2.0">' +
+                  '<client clientId="123"/>' +
+                  '<requestType>api_search_location_stops_nearby</requestType>' +
+                  '<outputCoords>WGS84</outputCoords>' +
+                  '<fromCoordName>WGS84</fromCoordName>' +
+                  '<fromType>coords</fromType>' +
+                  '<fromWgs84Lat>' + latitude + '</fromWgs84Lat>' +
+                  '<fromWgs84Lon>' + longitude + '</fromWgs84Lon>' +
+                '</request>' +
+              '</ft>';
+
+var postRequest = {
+    host: "webservice.qando.at",
+    path: "/2.0/webservice.ft",
+    port: 80,
+    method: "POST",
+    headers: {
+        'Content-Type': 'text/xml',
+        'Content-Length': Buffer.byteLength(body)
+    }
+};
+
+var buffer = "";
+var output = [];
+var req = http.request(postRequest, function(res) {
+  var buffer = "";
+  res.on( "data", function( data ) { buffer = buffer + data; } );
+  res.on( "end", function( data ) {
+    var parseString = require('xml2js').parseString;
+    parseString(buffer, function (err, result) {
+      result.ft.response[0].locations[0].location.forEach(function(s) {
+        output.push({
+          id: s.$.name,
+          name: s.$.title,
+          latitude: s.$.wgs84Lat,
+          longitude: s.$.wgs84Lon,
+          lines: s.$.relatedLines.split("|"),
+          distance: s.$.distanceMeter,
+          duration: s.$.durationMinutes
+        });
+      });
+      console.log(output);
+    });
+  });
+});
+
+req.write(body);
+req.end();
+
