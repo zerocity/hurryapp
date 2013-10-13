@@ -1,6 +1,6 @@
 var express = require('express'),
-		http = require('http')
-		parser = require('xml2json'),
+		http = require('http'),
+		parser = require('xml2js').parseString,
 		app = express();
 		
 	app.configure(function(){
@@ -63,11 +63,8 @@ var express = require('express'),
 			  });
 
 			  quandoRes.on("end", function( data ) {	  	
-			    var parseString = require('xml2js').parseString;
-			    parseString(buffer, function (err, result) {
-
-
-			      result.ft.response[0].locations[0].location.forEach(function(s) {
+			    parser(buffer, function (err, result) {
+ 						result.ft.response[0].locations[0].location.forEach(function(s) {
 			        output.push({
 			          id: s.$.name,
 			          name: s.$.title,
@@ -94,10 +91,10 @@ var express = require('express'),
 	
 
 	app.get('/', function (req, res){
-		res.json(200,{'name':'asdasd'})
+		res.redirect('/index.html')
 	});
 
 
-	var port = process.env.PORT || 80;
+	var port = process.env.PORT || 3000;
 	app.listen(port);
-	console.log("Http server listening on port 80");
+	console.log("Http server listening on port 3000");
